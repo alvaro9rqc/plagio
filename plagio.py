@@ -1,4 +1,4 @@
-import math
+import math,random
 _default_error = 1e-5
 _max_iteration = 50
 _default_decimals = 7
@@ -84,12 +84,15 @@ def mod_newthon_raphson(xinit, f, d1f, d2f, eps=_default_error, max_ite=_max_ite
                        eps=eps,
                        max_ite=max_ite)
     
+
+
 def quadroot(r, s):
     disc = r**2 + 4*s
 
     t = math.sqrt(abs(disc))
     if disc > 0:
-        r1 = r2 = (r + t) / 2
+        r1 = (r + t) / 2
+        r2 = (r - t) / 2
         i1 = i2 = 0 
     else:
         r1 = r2 = r / 2
@@ -106,7 +109,7 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
     r_error = 1
     s_error = 1
     degree = len(coef) - 1
-    roots = [(0.0,0.0)] * (degree + 1)
+    roots = [(0.0,0.0)] * (degree)
     status = 0
     b = [0.0] * (degree+1)
     c = [0.0] * (degree+1)
@@ -143,34 +146,28 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
             if (r_error <= eps and s_error <= eps) or iterations >= max_ite:
                 break
         real1, imag1, real2, imag2 =  quadroot(r, s)
-        print("=============0")
-        print(real1, imag1, real2, imag2)
         #roots.append((real1, imag1))
         #roots.append((real2, imag2))
-        roots[degree] = (real1, imag1)
-        roots[degree-1] = (real2, imag2)
+        roots[degree-1] = (real1, imag1)
+        roots[degree-2] = (real2, imag2)
         degree -= 2
         # update coefficients
-        print(coef)
         for i in range(0, degree+1): coef[i] = b[i+2]
-        print(coef)
-        print(degree)
-        print(b)
-    print(coef)
     if iterations < max_ite:
         if degree == 2: 
             r = -coef[1] / coef[2]
             s = -coef[0] / coef[2]
             real1, imag1, real2, imag2 =  quadroot(r, s)
-            roots[degree] = (real1, imag1)
-            roots[degree-1] = (real2, imag2)
-        else:
-            roots[degree] = (-coef[0]/coef[1], 0)
+            roots[degree-1] = (real1, imag1)
+            roots[degree-2] = (real2, imag2)
+        elif degree==1:
+            roots[degree-1] = (-coef[0]/coef[1], 0)
     else:
         # there was an error
         print("does not converge")
         status=1
     return roots, status
+
 
 
 if __name__ == "__main__":
