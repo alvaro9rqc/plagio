@@ -118,6 +118,7 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
         if degree < 3 or iterations >= max_ite: break
         iterations = 0
         print(f"Iteration with degree {degree}")
+        _tabprint(["ite", "r", "s","dr","ds", "r_error", "s_error", "det"])
         while True:
             iterations+=1
             # division of polynomials
@@ -130,6 +131,7 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
                 b[i] = coef[i] + r * b[i+1] + s * b[i+2]
                 c[i] = b[i] + r * c[i+1] + s * c[i+2]
             det = c[2]**2 - c[3]*c[1]
+            fila = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             if det != 0:
                 dr = (-b[1]*c[2]+b[0]*c[3]) / det
                 ds = (-b[0]*c[2] + b[1]*c[1])/ det
@@ -139,13 +141,27 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
                 else: r_error = float("inf")
                 if s !=0: s_error = abs(ds / s)*100 
                 else: s_error = float("inf")
+                fila[3]=dr
+                fila[4]=ds
             else:
                 r+=1
                 s+=1
                 iterations = 0
+                fila[3]=float("int")
+                fila[4]=float("int")
+            fila[0]= iterations
+            fila[1]= r
+            fila[2]= s
+            fila[5]= r_error
+            fila[6]= s_error
+            fila[7]= det
+            _tabprint(fila)
             if (r_error <= eps and s_error <= eps) or iterations >= max_ite:
                 break
+        print("roots found")
         real1, imag1, real2, imag2 =  quadroot(r, s)
+        _tabprint(["real1", "imag1", "real2", "imag2"])
+        _tabprint([real1, imag1, real2, imag2])
         #roots.append((real1, imag1))
         #roots.append((real2, imag2))
         roots[degree-1] = (real1, imag1)
@@ -161,7 +177,10 @@ def bairstow(coef, r_init, s_init, eps=_default_error, max_ite=_max_iteration):
             roots[degree-1] = (real1, imag1)
             roots[degree-2] = (real2, imag2)
         elif degree==1:
+            print("degree 1")
+            _tabprint(["coef[0]", "coef[1]"])
             roots[degree-1] = (-coef[0]/coef[1], 0)
+            _tabprint([coef[0], coef[1]])
     else:
         # there was an error
         print("does not converge")
