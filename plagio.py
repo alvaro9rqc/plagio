@@ -85,6 +85,85 @@ def mod_newthon_raphson(xinit, f, d1f, d2f, eps=_default_error, max_ite=_max_ite
                        max_ite=max_ite)
     
 
+def fixed_point(xinit, g, eps=_default_error, max_ite=_max_iteration):
+    def cells(x_now, x_next, i):
+        return [i, x_now, g(x_now), x_next]
+    return _default_iteration(
+        fi=g,
+        xinit=xinit,
+        headers=["ite", "xi", "g(xi)", "xi+1"],
+        cells=cells,
+        eps=eps,
+        max_ite=max_ite
+    )
+
+# Punto fijo modificado (usa derivada de g para acelerar convergencia)
+def mod_fixed_point(xinit, g, dg, eps=_default_error, max_ite=_max_iteration):
+    def g_mod(x):
+        return x - (g(x) - x) / (dg(x) - 1)  # variante de Newton sobre g(x)-x=0
+    def cells(x_now, x_next, i):
+        return [i, x_now, g(x_now), dg(x_now), x_next]
+    return _default_iteration(
+        fi=g_mod,
+        xinit=xinit,
+        headers=["ite", "xi", "g(xi)", "g'(xi)", "xi+1"],
+        cells=cells,
+        eps=eps,
+        max_ite=max_ite
+    )
+
+def secante(x0, x1, f, eps=_default_error, max_ite=_max_iteration):
+    def fi(x_pair):
+        x_prev, x_now = x_pair
+        f_prev, f_now = f(x_prev), f(x_now)
+        if f_now - f_prev == 0:
+            return (x_now, x_now)  # evitar división por cero
+        x_next = x_now - f_now * (x_now - x_prev) / (f_now - f_prev)
+        return (x_now, x_next)
+
+    def cells(x_prev, x_now, i):
+        return [i, x_prev, f(x_prev), x_now, f(x_now)]
+
+    # envolvemos el iterador
+    def wrapper(x_pair):
+        return fi(x_pair)
+
+    # inicialización
+    x_pair = (x0, x1)
+    _tabprint(["ite", "xi-1", "f(xi-1)", "xi", "f(xi)"])
+    iterations = 0
+    rel_error = 100
+    while True:
+        x_prev, x_now = x_pair
+        x_pair = fi(x_pair)
+        x_new = x_pair[1]
+        iterations += 1
+        _tabprint(cells(x_prev, x_now, iterations))
+        if x_new != 0:
+            rel_error = abs((x_new - x_now) / x_new) * 100
+        if rel_error < eps or iterations >= max_ite:
+            break
+    return x_new, rel_error, iterations
+
+# Secante modificada (usa un solo punto y evalúa f(x+h) con h pequeño)
+def secante_mod(xinit, f, h=1e-4, eps=_default_error, max_ite=_max_iteration):
+    def g(x):
+        d_approx = (f(x+h) - f(x)) / h  # derivada aproximada
+        return x - f(x)/d_approx
+
+    def cells(x_now, x_next, i):
+        return [i, x_now, f(x_now), x_next]
+
+    return _default_iteration(
+        fi=g,
+        xinit=xinit,
+        headers=["ite", "xi", "f(xi)", "xi+1"],
+        cells=cells,
+        eps=eps,
+        max_ite=max_ite
+    )
+
+
 
 def quadroot(r, s):
     disc = r**2 + 4*s
